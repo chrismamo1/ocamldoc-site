@@ -125,7 +125,7 @@ let update_packages = get "/sys/update-packages/" (fun req ->
             let _ =
               begin match String.is_prefix url ~prefix:"svn://" with
               | true -> (* use svn *)
-                  Unix.system ("svn checkout " ^ url)
+                  Unix.system ("svn checkout " ^ url ^ " " ^ name)
               | false -> (* otherwise, assume that it uses Git *)
                   Unix.system ("git clone " ^ url)
               end
@@ -176,7 +176,7 @@ let docview = get "/:package" (fun req ->
         ; url = find "url"
         ; doc_url = find "doc_url" } :: !aux)
     in
-    let rc = Sqlite3.exec db ~cb "SELECT * FROM packages" in
+    let rc = Sqlite3.exec db ~cb "SELECT * FROM packages ORDER BY name" in
     !aux
   in
   let _ = Sqlite3.db_close db in
