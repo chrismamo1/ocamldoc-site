@@ -146,7 +146,7 @@ let update_packages = get "/sys/update-packages/" (fun req ->
             in
             let rc = Sqlite3.exec db sql in
             begin match rc with
-            | Sqlite3.Rc.OK -> { name; version; url; doc_url }
+            | Sqlite3.Rc.OK | Sqlite3.Rc.CONSTRAINT -> { name; version; url; doc_url }
             | _ ->
                 let _ = Sqlite3.db_close db in
                 raise (Failure ("sql: " ^ sql ^ "\n\nerror: " ^ Sqlite3.Rc.to_string rc))
