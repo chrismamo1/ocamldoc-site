@@ -33,27 +33,55 @@ let homepage packages =
       packages
       ~f:(fun pkg ->
         let doc_url = urldecode pkg.doc_url ^ "/index.html" in
-        <:html<<a href=$str:doc_url$><b>$str:pkg.name$</b> <i>$str:pkg.version$</i></a>&>>)
+        <:html<<a target="doc-container" href=$str:doc_url$><b>$str:pkg.name$</b> <i>$str:pkg.version$</i></a>&>>)
     |> Html.Create.ul
   in
   let style = <:css<
-    * {
-      font-stack: Verdana, Helvetica, sans-serif;
-    }
-    nav#topnav {
-      height: 48px;
+    a {
+      color: #420000;
+      text-decoration: none; }
+    body {
+      font-stack: Verdana, Helvetica, sans-serif; }
+    nav {
+      list-style-type: none;
+      background-color: #42ff42;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12),
+      0 1px 2px rgba(0,0,0,0.24);
+      color: rgba(255,255,255,0.8);
+      font-size: 24px;
+      height: 56px;
+      line-height: 48px;
+      padding: 0 0;
+      margin-left: 0;
+      left: 0;
       position: fixed;
       top: 0;
-      line-height: 48px; }
+      width: calc(100% - 2px);
+      z-index: 1000; }
+    nav * {
+      vertical-align: middle; }
+    nav #links {
+      display: inline;
+      position: absolute;
+      right: 25px; }
     #sidebar {
+      background-color: #fcfcfc;
+      border-right: 1px solid #dedede;
       display: inline-block;
+      overflow-y: auto;
       position: fixed;
-      top: 48px;
-      left: 0;
-      width: 240px; }
+      top: 56px;
+      width: 240px;
+      height: 100%; }
     #content-wrapper {
+      position: fixed;
+      top: 56px;
+      height: calc(100% - 56px);
       margin-left: 240px;
-      width: calc(100% - 240px); } >>
+      text-align: left;
+      vertical-align: top;
+      width: calc(100% - 240px); }
+     >>
     |> Html.Create.stylesheet
   in
   <:html<
@@ -67,9 +95,12 @@ let homepage packages =
             <img src="/img/colour-icon-170x148.png" width="55" height="48"></img>
             About OCaml
           </a>
+          <div id="links">
+            <a href="null">About</a>
+          </div>
         </nav>
         <div id="sidebar">$plist$</div>
-        <div id="content-wrapper"></div>
+        <iframe name="doc-container" id="content-wrapper"></iframe>
       </body>
     </html>&>>
 
