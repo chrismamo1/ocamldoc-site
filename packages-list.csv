@@ -2,5 +2,5 @@
 "cryptokit","1.10","svn://scm.ocamlcore.org/svn/cryptokit/trunk","make doc && mv api-cryptokit.docdir doc"
 "yojson","dev","https://github.com/mjambon/yojson.git","make doc"
 "xmlm","dev","https://github.com/dbuenzli/xmlm.git","ocamldoc -html -d ./doc ./src/*"
-"ocaml-cohttp","dev","https://github.com/mirage/ocaml-cohttp.git","make doc"
-"ocaml-github","dev","https://github.com/mirage/ocaml-github.git","make doc"
+"ocaml-cohttp","dev","https://github.com/mirage/ocaml-cohttp.git","make doc && mv api.docdir doc"
+"ocaml-github","dev","https://github.com/mirage/ocaml-github.git","make doc && mv api.docdir doc"
