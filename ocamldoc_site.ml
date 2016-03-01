@@ -73,6 +73,8 @@ let homepage packages =
       top: 56px;
       width: 240px;
       height: 100%; }
+    #sidebar li:hover {
+      background: rgba(0,0,0,0.1); }
     #content-wrapper {
       position: fixed;
       top: 56px;
