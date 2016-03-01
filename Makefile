@@ -6,5 +6,8 @@ ocamldoc_site.native: ocamldoc_site.ml
 test: ocamldoc_site.native
 	cd env && ../ocamldoc_site.native -p 9009 -d
 
+run: ocamldoc_site.native
+	cd env && ../ocamldoc_site.native -p 80
+
 clean:
 	corebuild -clean
