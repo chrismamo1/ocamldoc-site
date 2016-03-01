@@ -91,7 +91,14 @@ let update_packages = get "/sys/update-packages/" (fun req ->
             let name = Csv.Row.find row  "name" in
             let command = Csv.Row.find row "command" in
             let () = Unix.chdir "./docs" in
-            let _ = Unix.system ("git clone " ^ url) in
+            let _ =
+              begin match String.is_prefix url ~prefix:"svn://" with
+              | true -> (* use svn *)
+                  Unix.system ("svn checkout " ^ url)
+              | false -> (* otherwise, assume that it uses Git *)
+                  Unix.system ("git clone " ^ url)
+              end
+            in
             let () = Unix.chdir ("./" ^ name) in
             let _ = Unix.system command in
             let doc_url = "/docs/" ^ name ^ "/doc" in
