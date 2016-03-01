@@ -3,4 +3,4 @@
 "yojson","dev","https://github.com/mjambon/yojson.git","make doc"
 "xmlm","dev","https://github.com/dbuenzli/xmlm.git","ocamldoc -html -d ./doc ./src/*"
 "ocaml-cohttp","dev","https://github.com/mirage/ocaml-cohttp.git","make doc && mv api.docdir doc"
-"ocaml-github","dev","https://github.com/mirage/ocaml-github.git","make doc && mv api.docdir doc"
+"ocaml-github","dev","https://github.com/mirage/ocaml-github.git","make doc && mv docs doc"
