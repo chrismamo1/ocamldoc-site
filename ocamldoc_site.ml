@@ -8,6 +8,9 @@ type package =
   ; url: string
   ; doc_url: string }
 
+let urlencode = Netencoding.Url.encode
+let urldecode = Netencoding.Url.decode
+
 let unoption ?(default=None) =
   (** match on `default` first so that partial-application will yield a function
     * custom for the specified default value, which should marginally improve
@@ -66,6 +69,45 @@ let homepage packages =
         <div id="content-wrapper"></div>
       </body>
     </html>&>>
+
+let update_packages = get "/sys/update-packages/" (fun req ->
+  let url =
+    "https://raw.githubusercontent.com/chrismamo1/ocamldoc-site/master/packages-list.csv" in
+  let status = Unix.system ("wget " ^ url ^ " -O packages-list.csv") in
+  match status with
+  | WEXITED 0 ->
+      let ic = open_in "packages-list.csv" in
+      let csv = Csv.of_channel ~header:["name"; "version"; "url"; "command"] ic in
+      let rows = Csv.Rows.input_all csv in
+      let db = Sqlite3.db_open "packages.db" in
+      let packages =
+        List.map
+          rows
+          ~f:(fun row ->
+            let url = Csv.Row.find row "url" in
+            let name = Csv.Row.find row  "name" in
+            let command = Csv.Row.find row "command" in
+            let () = Unix.chdir "./docs" in
+            let _ = Unix.system ("git clone " ^ url) in
+            let () = Unix.chdir ("./" ^ name) in
+            let _ = Unix.system command in
+            let doc_url = Unix.getcwd () ^ "/doc" in
+            let () = Unix.chdir "../../" in
+            let sql =
+              Printf.sprintf
+                "INSERT INTO packages (name, version, url, doc_url) \
+                  VALUES (%s, %s, %s, %s)"
+                (urlencode name)
+                (urlencode version)
+                (urlencode url)
+                (urlencode doc_url)
+            in
+            let _ = Sqlite3.exec db sql in
+            { name; version; url; doc_url })
+      in
+      let _ = Sqlite3.db_close db in
+      (`String "Success." |> respond')
+  | _ -> `String "Failure." |> respond' )
 
 let docview = get "/:package" (fun req ->
   let db = Sqlite3.db_open "packages.db" in
