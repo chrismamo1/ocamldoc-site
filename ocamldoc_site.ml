@@ -180,7 +180,7 @@ let docview = get "/:package" (fun req ->
     !aux
   in
   let _ = Sqlite3.db_close db in
-  `Html (packages |> homepage |> Html.to_string)
+  `Html (packages |> List.rev |> homepage |> Html.to_string)
   |> respond')
 
 let _ =
