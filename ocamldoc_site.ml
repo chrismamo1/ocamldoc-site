@@ -8,6 +8,14 @@ type package =
   ; url: string
   ; doc_url: string }
 
+type recipe =
+  { name: string
+  ; get_cmd: string
+  ; make_cmd: string
+  ; docdir: string
+  ; deps: string
+  ; version: string }
+
 let urlencode = Netencoding.Url.encode
 let urldecode = Netencoding.Url.decode
 
@@ -106,59 +114,7 @@ let homepage packages =
       </body>
     </html>&>>
 
-let update_packages = get "/sys/update-packages/" (fun req ->
-  let url =
-    "https://raw.githubusercontent.com/chrismamo1/ocamldoc-site/master/packages-list.csv" in
-  let status = Unix.system ("wget " ^ url ^ " -O packages-list.csv") in
-  match status with
-  | WEXITED 0 ->
-      let ic = open_in "packages-list.csv" in
-      let csv = Csv.of_channel ~header:["name"; "version"; "url"; "command"] ic in
-      let rows = Csv.Rows.input_all csv in
-      let db = Sqlite3.db_open "packages.db" in
-      let packages =
-        List.map
-          rows
-          ~f:(fun row ->
-            let url = Csv.Row.find row "url" in
-            let name = Csv.Row.find row  "name" in
-            let command = Csv.Row.find row "command" in
-            let () = Unix.chdir "./docs" in
-            let _ =
-              begin match String.is_prefix url ~prefix:"svn://" with
-              | true -> (* use svn *)
-                  Unix.system ("svn checkout " ^ url ^ " " ^ name)
-              | false -> (* otherwise, assume that it uses Git *)
-                  Unix.system ("git clone " ^ url)
-              end
-            in
-            let () = Unix.chdir ("./" ^ name) in
-            let _ = Unix.system command in
-            let doc_url = "/docs/" ^ name ^ "/doc" in
-            let () = Unix.chdir "../../" in
-            let version = Csv.Row.find row "version" in
-            let sql =
-              Printf.sprintf
-                "INSERT INTO packages ('name', 'version', 'url', 'doc_url') \
-                  VALUES ('%s', '%s', '%s', '%s');"
-                (urlencode name)
-                (urlencode version)
-                (urlencode url)
-                (urlencode doc_url)
-            in
-            let rc = Sqlite3.exec db sql in
-            begin match rc with
-            | Sqlite3.Rc.OK | Sqlite3.Rc.CONSTRAINT -> { name; version; url; doc_url }
-            | _ ->
-                let _ = Sqlite3.db_close db in
-                raise (Failure ("sql: " ^ sql ^ "\n\nerror: " ^ Sqlite3.Rc.to_string rc))
-            end)
-      in
-      let _ = Sqlite3.db_close db in
-      (`String "Success." |> respond')
-  | _ -> `String "Failure." |> respond' )
-
-let docview = get "/:package" (fun req ->
+let get_packages () =
   let db = Sqlite3.db_open "packages.db" in
   let packages =
     let aux = ref [] in
@@ -171,7 +127,7 @@ let docview = get "/:package" (fun req ->
           (Array.to_list r)
           (fun h r -> h, (unoption r)) in
       (* shorthand for grabbing from a particular association *)
-      let find = List.Assoc.find_exn row in
+      let find x = List.Assoc.find_exn row x |> urldecode in
       ignore(aux :=
         { name = find "name"
         ; version = find "version"
@@ -182,6 +138,64 @@ let docview = get "/:package" (fun req ->
     !aux
   in
   let _ = Sqlite3.db_close db in
+  packages
+
+let get_recipe pkg_name pkg_vers =
+  let db = Sqlite3.db_open "packages.db" in
+  let sql =
+    Printf.sprintf
+      "SELECT * FROM packages WHERE name='%s' AND version='%s' LIMIT 1"
+      (urlencode pkg_name)
+      (urlencode pkg_vers) in
+  let recipe = ref None in
+  let cb = fun r h ->
+    (* this next thing is crazy non-performant, but I like associations *)
+    let row =
+      List.map2_exn
+        (Array.to_list h)
+        (Array.to_list r)
+        (fun h r -> h, (unoption r)) in
+    (* shorthand for grabbing from a particular association *)
+    let find x = List.Assoc.find_exn row x |> urldecode in
+    ignore(recipe := Some
+      { name = find "package"
+      ; get_cmd = find "get_cmd"
+      ; make_cmd = find "make_cmd"
+      ; docdir = find "docdir"
+      ; deps = find "deps"
+      ; version = find "version" })
+  in
+  let rc = Sqlite3.exec db ~cb sql in
+  let _ = Sqlite3.db_close db in
+  !recipe
+
+let update_packages = get "/sys/update-packages/" (fun req ->
+  let packages = get_packages () in
+  let () = Unix.chdir "./docs" in
+  let () =
+    List.iter packages
+      ~f:(fun pkg ->
+        let recipe = get_recipe pkg.name pkg.version in
+        match recipe with
+        | None -> ()
+        | Some r ->
+            let _ = Unix.mkdir "tmp" in (** TODO: if this fails, very bad things *)
+            let _ = Unix.chdir "./tmp" in
+            let _ = Unix.system r.get_cmd in
+            let _ = Unix.chdir (urlencode r.name) in
+            let _ = Unix.system r.make_cmd in
+            let _ = Unix.chdir ".." in
+            let _ =
+              Unix.system
+                ( "mv ./" ^ urlencode r.name ^ " ../" ^ urlencode r.name ^ "/"
+                  ^ urlencode r.version) in
+            let _ = Unix.system "rm -rf ./* && cd ../ && rmdir tmp" in
+            ())
+  in `String "Success!" |> respond')
+
+
+let docview = get "/:package" (fun req ->
+  let packages = get_packages () in
   `Html (packages |> List.rev |> homepage |> Html.to_string)
   |> respond')
 
