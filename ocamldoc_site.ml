@@ -191,7 +191,9 @@ let update_packages = get "/sys/update-packages/" (fun req ->
                   ^ urlencode r.version) in
             let _ = Unix.system "rm -rf ./* && cd ../ && rmdir tmp" in
             ())
-  in `String "Success!" |> respond')
+  in
+  let () = Unix.chdir ".." in
+  `String "Success!" |> respond')
 
 
 let docview = get "/:package" (fun req ->
