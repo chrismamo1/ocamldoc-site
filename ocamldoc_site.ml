@@ -40,7 +40,9 @@ let homepage packages =
     List.map
       packages
       ~f:(fun pkg ->
-        let doc_url = urlencode pkg.doc_url in
+        let doc_url =
+          "docs/" ^ (urlencode pkg.name) ^ "/" ^ (urlencode pkg.version)
+          ^ "/" ^ pkg.doc_url in
         <:html<<a target="doc-container" href=$str:doc_url$><b>$str:pkg.name$</b> <i>$str:pkg.version$</i></a>&>>)
     |> Html.Create.ul
   in
