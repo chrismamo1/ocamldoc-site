@@ -39,7 +39,7 @@ let homepage packages =
   let plist =
     List.map
       packages
-      ~f:(fun pkg ->
+      ~f:(fun (pkg : package) ->
         let doc_url =
           "docs/" ^ (urlencode pkg.name) ^ "/" ^ (urlencode pkg.version)
           ^ "/" ^ pkg.doc_url in
