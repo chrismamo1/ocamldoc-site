@@ -117,7 +117,7 @@ let homepage packages =
     </html>&>>
 
 let get_packages () =
-  let db = Sqlite3.db_open "packages.db" in
+  let db = Sqlite3.db_open "../packages.db" in
   let packages =
     let aux = ref [] in
     let unoption = unoption ~default:(Some "") in
@@ -143,7 +143,7 @@ let get_packages () =
   packages
 
 let get_recipe pkg_name pkg_vers =
-  let db = Sqlite3.db_open "packages.db" in
+  let db = Sqlite3.db_open "../packages.db" in
   let sql =
     Printf.sprintf
       "SELECT * FROM recipes WHERE package='%s' AND version='%s' LIMIT 1"
