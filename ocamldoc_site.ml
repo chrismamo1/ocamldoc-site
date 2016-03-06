@@ -191,7 +191,7 @@ let update_packages = get "/sys/update-packages/" (fun req ->
               Unix.system
                 ( "mv ./" ^ urlencode r.name ^ " ../" ^ urlencode r.name ^ "/"
                   ^ urlencode r.version) in
-            let _ = Unix.system "rm -rf ./* && cd ../ && rmdir tmp" in
+            let _ = Unix.system "cd ../ && rmdir tmp" in
             ())
   in
   let () = Unix.chdir ".." in
