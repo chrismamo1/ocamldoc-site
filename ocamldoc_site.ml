@@ -146,7 +146,7 @@ let get_recipe pkg_name pkg_vers =
   let db = Sqlite3.db_open "packages.db" in
   let sql =
     Printf.sprintf
-      "SELECT * FROM packages WHERE name='%s' AND version='%s' LIMIT 1"
+      "SELECT * FROM recipes WHERE package='%s' AND version='%s' LIMIT 1"
       (urlencode pkg_name)
       (urlencode pkg_vers) in
   let recipe = ref None in
