@@ -181,7 +181,7 @@ let update_packages = get "/sys/update-packages/" (fun req ->
         match recipe with
         | None -> output_string stdout "No recipe found!"; ()
         | Some r ->
-            let _ = Unix.mkdir "tmp" in (** TODO: if this fails, very bad things *)
+            let _ = Unix.mkdir "./tmp" in (** TODO: if this fails, very bad things *)
             let _ = Unix.chdir "./tmp" in
             let _ = Unix.system r.get_cmd in
             let _ = Unix.chdir (urlencode r.name) in
